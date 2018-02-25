@@ -99,6 +99,7 @@ exports[`renders StackChartGraph correctly 1`] = `
         <canvas
           className="chartCanvas stackChartCanvas"
           onDoubleClick={[Function]}
+          onMouseDown={[Function]}
           onMouseMove={[Function]}
           onMouseOut={[Function]}
         />

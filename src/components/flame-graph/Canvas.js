@@ -20,7 +20,10 @@ import type {
   IndexIntoFlameGraphTiming,
 } from '../../profile-logic/flame-graph';
 
-import type { CallNodeInfo } from '../../types/profile-derived';
+import type {
+  CallNodeInfo,
+  IndexIntoCallNodeTable,
+} from '../../types/profile-derived';
 import type { Viewport } from '../shared/chart/Viewport';
 
 export type OwnProps = {|
@@ -29,6 +32,7 @@ export type OwnProps = {|
   +flameGraphTiming: FlameGraphTiming,
   +callNodeInfo: CallNodeInfo,
   +stackFrameHeight: CssPixels,
+  +onSelectionChange: IndexIntoCallNodeTable => void,
 |};
 
 type Props = {|
@@ -56,6 +60,7 @@ class FlameGraphCanvas extends React.PureComponent<Props> {
     (this: any)._getHoveredStackInfo = this._getHoveredStackInfo.bind(this);
     (this: any)._drawCanvas = this._drawCanvas.bind(this);
     (this: any)._hitTest = this._hitTest.bind(this);
+    (this: any)._onMouseDown = this._onMouseDown.bind(this);
   }
 
   _drawCanvas(
@@ -177,6 +182,18 @@ class FlameGraphCanvas extends React.PureComponent<Props> {
     );
   }
 
+  _onMouseDown(hoveredItem: HoveredStackTiming | null) {
+    if (hoveredItem === null) {
+      return;
+    }
+    const { depth, flameGraphTimingIndex } = hoveredItem;
+    const { flameGraphTiming } = this.props;
+
+    const stackTiming = flameGraphTiming[depth];
+    const callNodeIndex = stackTiming.callNode[flameGraphTimingIndex];
+    this.props.onSelectionChange(callNodeIndex);
+  }
+
   _hitTest(x: CssPixels, y: CssPixels): HoveredStackTiming | null {
     const {
       flameGraphTiming,
@@ -217,6 +234,7 @@ class FlameGraphCanvas extends React.PureComponent<Props> {
         getHoveredItemInfo={this._getHoveredStackInfo}
         drawCanvas={this._drawCanvas}
         hitTest={this._hitTest}
+        onMouseDown={this._onMouseDown}
       />
     );
   }

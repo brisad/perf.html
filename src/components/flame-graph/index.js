@@ -13,12 +13,19 @@ import {
 } from '../../reducers/profile-view';
 import FlameGraphSettings from './Settings';
 import { getSelectedThreadIndex } from '../../reducers/url-state';
+import TransformNavigator from '../calltree/TransformNavigator';
+import ContextMenuTrigger from '../shared/ContextMenuTrigger';
+import { getCallNodePath } from '../../profile-logic/profile-data';
+import { changeSelectedCallNode } from '../../actions/profile-view';
 
 import type { Thread } from '../../types/profile';
 import type { Milliseconds } from '../../types/units';
 import type { FlameGraphTiming } from '../../profile-logic/flame-graph';
 import type { ProfileSelection } from '../../types/actions';
-import type { CallNodeInfo } from '../../types/profile-derived';
+import type {
+  CallNodeInfo,
+  IndexIntoCallNodeTable,
+} from '../../types/profile-derived';
 
 import type {
   ExplicitConnectOptions,
@@ -40,9 +47,29 @@ type StateProps = {|
   +callNodeInfo: CallNodeInfo,
   +threadIndex: number,
 |};
-type Props = ConnectedProps<{||}, StateProps, {||}>;
+
+type DispatchProps = {|
+  +changeSelectedCallNode: typeof changeSelectedCallNode,
+|};
+
+type Props = ConnectedProps<{||}, StateProps, DispatchProps>;
 
 class FlameGraph extends React.PureComponent<Props> {
+  constructor(props) {
+    super(props);
+    (this: any)._onSelectedCallNodeChange = this._onSelectedCallNodeChange.bind(
+      this
+    );
+  }
+
+  _onSelectedCallNodeChange(callNodeIndex: IndexIntoCallNodeTable) {
+    const { callNodeInfo, threadIndex, changeSelectedCallNode } = this.props;
+    changeSelectedCallNode(
+      threadIndex,
+      getCallNodePath(callNodeIndex, callNodeInfo.callNodeTable)
+    );
+  }
+
   render() {
     const {
       thread,
@@ -61,32 +88,41 @@ class FlameGraph extends React.PureComponent<Props> {
     return (
       <div className="flameGraph">
         <FlameGraphSettings />
-        <div className="flameGraphContent">
-          <div title={processDetails} className="flameGraphLabels grippy">
-            <span>{threadName}</span>
+        <TransformNavigator />
+        <ContextMenuTrigger
+          id={'ProfileCallTreeContextMenu'}
+          attributes={{
+            className: 'treeViewContextMenu',
+          }}
+        >
+          <div className="flameGraphContent">
+            <div title={processDetails} className="flameGraphLabels grippy">
+              <span>{threadName}</span>
+            </div>
+            <FlameGraphCanvas
+              key={threadIndex}
+              // ChartViewport props
+              viewportProps={{
+                timeRange,
+                maxViewportHeight,
+                maximumZoom: 1,
+                selection,
+                startsAtBottom: true,
+                disableHorizontalMovement: true,
+                viewportNeedsUpdate,
+              }}
+              // FlameGraphCanvas props
+              chartProps={{
+                thread,
+                maxStackDepth,
+                flameGraphTiming,
+                callNodeInfo,
+                stackFrameHeight: STACK_FRAME_HEIGHT,
+                onSelectionChange: this._onSelectedCallNodeChange,
+              }}
+            />
           </div>
-          <FlameGraphCanvas
-            key={threadIndex}
-            // ChartViewport props
-            viewportProps={{
-              timeRange,
-              maxViewportHeight,
-              maximumZoom: 1,
-              selection,
-              startsAtBottom: true,
-              disableHorizontalMovement: true,
-              viewportNeedsUpdate,
-            }}
-            // FlameGraphCanvas props
-            chartProps={{
-              thread,
-              maxStackDepth,
-              flameGraphTiming,
-              callNodeInfo,
-              stackFrameHeight: STACK_FRAME_HEIGHT,
-            }}
-          />
-        </div>
+        </ContextMenuTrigger>
       </div>
     );
   }
@@ -100,7 +136,7 @@ function viewportNeedsUpdate(
   return prevProps.flameGraphTiming !== newProps.flameGraphTiming;
 }
 
-const options: ExplicitConnectOptions<{||}, StateProps, {||}> = {
+const options: ExplicitConnectOptions<{||}, StateProps, DispatchProps> = {
   mapStateToProps: state => {
     const flameGraphTiming = selectedThreadSelectors.getFlameGraphTiming(state);
 
@@ -117,6 +153,9 @@ const options: ExplicitConnectOptions<{||}, StateProps, {||}> = {
       callNodeInfo: selectedThreadSelectors.getCallNodeInfo(state),
       threadIndex: getSelectedThreadIndex(state),
     };
+  },
+  mapDispatchToProps: {
+    changeSelectedCallNode,
   },
   component: FlameGraph,
 };

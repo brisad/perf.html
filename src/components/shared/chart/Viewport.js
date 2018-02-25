@@ -396,7 +396,6 @@ export const withChartViewport: WithChartViewport<*, *> =
           dragY: event.clientY,
           isDragging: true,
         });
-        event.stopPropagation();
         event.preventDefault();
 
         window.addEventListener('mousemove', this._mouseMoveListener, true);

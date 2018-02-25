@@ -24,6 +24,7 @@ exports[`renders MarkerChart correctly 1`] = `
       <canvas
         className="chartCanvas markerChartCanvas"
         onDoubleClick={[Function]}
+        onMouseDown={[Function]}
         onMouseMove={[Function]}
         onMouseOut={[Function]}
       />
