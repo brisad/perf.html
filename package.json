@@ -40,7 +40,9 @@
     "test-build-coverage": "jest --coverage --coverageReporters=html",
     "test-serve-coverage": "ws -d coverage/ -p 4343",
     "test-coverage": "run-s test-build-coverage test-serve-coverage",
-    "test-alex": "alex ./docs-* *.md"
+    "test-alex": "alex ./docs-* *.md",
+    "snyk-protect": "snyk protect",
+    "prepublish": "npm run snyk-protect"
   },
   "author": "Markus Stange <mstange@themasta.com>",
   "license": "MPL-2.0",
@@ -80,7 +82,8 @@
     "redux-thunk": "^2.2.0",
     "reselect": "^4.0.0",
     "url": "^0.11.0",
-    "weaktuplemap": "^1.0.0"
+    "weaktuplemap": "^1.0.0",
+    "snyk": "^1.192.4"
   },
   "devDependencies": {
     "@babel/cli": "7.2.3",
@@ -161,5 +164,6 @@
       "./src/test/setup.js"
     ],
     "verbose": false
-  }
+  },
+  "snyk": true
 }
